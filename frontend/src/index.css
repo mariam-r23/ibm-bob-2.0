@@ -1,0 +1,381 @@
+:root {
+  --module-color: #4f8df6;
+  --table-color: #f6b73c;
+  --bg: #0f1420;
+  --panel: #161d2e;
+  --border: #2a3550;
+  --text: #e7ecf7;
+  --text-dim: #9aa7c2;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.app__header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+
+.app__header h1 {
+  margin: 0 0 4px 0;
+  font-size: 20px;
+}
+
+.app__subtitle {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.app__subtitle code {
+  color: var(--text);
+  background: #1f2740;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.app__selection {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.app__selection-hint {
+  color: var(--table-color);
+}
+
+.app__stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.app__stat strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.app__stat--highlight strong {
+  color: var(--table-color);
+}
+
+.app__stat-sep {
+  color: var(--border);
+}
+
+.app__canvas {
+  flex: 1;
+  position: relative;
+}
+
+.app__status {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 5;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.app__status--error {
+  border-color: #e05a5a;
+  color: #ff9d9d;
+}
+
+.app__legend {
+  display: flex;
+  gap: 20px;
+  padding: 10px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.legend-swatch--module {
+  background: var(--module-color);
+}
+
+.legend-swatch--table {
+  background: var(--table-color);
+}
+
+.legend-line {
+  width: 18px;
+  height: 0;
+  border-top: 2px solid;
+  display: inline-block;
+}
+
+.legend-line--import {
+  border-color: var(--module-color);
+}
+
+.legend-line--relation {
+  border-color: var(--table-color);
+  border-top-style: dashed;
+}
+
+/* --- reactflow custom nodes --- */
+
+.node-card {
+  min-width: 140px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  padding: 8px 12px;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+
+.node-card__kind {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+
+.node-card__title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.node-card--module {
+  border-color: var(--module-color);
+}
+
+.node-card--table {
+  border-color: var(--table-color);
+}
+
+.node-card--selected {
+  border-width: 3px;
+  box-shadow: 0 0 0 3px rgba(79, 141, 246, 0.35), 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.node-card__fields {
+  margin: 6px 0 0 0;
+  padding-left: 16px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.node-card__fields li {
+  line-height: 1.5;
+}
+
+.node-card__files {
+  margin: 6px 0 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.node-card__files li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1.6;
+  font-family: 'Consolas', 'Menlo', monospace;
+}
+
+.node-card__file-icon {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--module-color);
+  background: rgba(79, 141, 246, 0.15);
+  border-radius: 3px;
+  padding: 1px 4px;
+}
+
+/* reactflow edge label readability on dark bg */
+.react-flow__edge-text {
+  fill: var(--text-dim);
+}
+
+.react-flow__edge-textbg {
+  fill: var(--bg);
+}
+
+/* --- edge colors, matching the legend at the bottom of the screen --- */
+
+.flow-edge--import .react-flow__edge-path {
+  stroke: var(--module-color);
+  stroke-width: 2px;
+}
+
+.flow-edge--relation .react-flow__edge-path {
+  stroke: var(--table-color);
+  stroke-width: 2px;
+  stroke-dasharray: 6 4;
+}
+
+/* --- pulse glow on seeded coupling edges --- */
+/* Every edge in this demo IS one of the two deliberately seeded coupling
+   points, so both get a slow breathing glow to draw the eye without being
+   distracting — this is the thing the whole graph exists to point at. */
+
+@keyframes coupling-pulse-import {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0px var(--module-color));
+    stroke-width: 2px;
+  }
+  50% {
+    filter: drop-shadow(0 0 6px var(--module-color));
+    stroke-width: 3px;
+  }
+}
+
+@keyframes coupling-pulse-relation {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0px var(--table-color));
+    stroke-width: 2px;
+  }
+  50% {
+    filter: drop-shadow(0 0 6px var(--table-color));
+    stroke-width: 3px;
+  }
+}
+
+.flow-edge--coupling.flow-edge--import .react-flow__edge-path {
+  animation: coupling-pulse-import 2.2s ease-in-out infinite;
+}
+
+.flow-edge--coupling.flow-edge--relation .react-flow__edge-path {
+  animation: coupling-pulse-relation 2.2s ease-in-out infinite 0.6s;
+}
+
+/* --- coupling points panel (top-right overlay on the canvas) --- */
+
+.coupling-panel {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 5;
+  width: 280px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+.coupling-panel__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+
+.coupling-panel__count {
+  background: var(--table-color);
+  color: #1a1400;
+  border-radius: 999px;
+  padding: 1px 7px;
+  font-size: 11px;
+}
+
+.coupling-panel__list {
+  list-style: none;
+  margin: 0;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.coupling-panel__item {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.coupling-panel__badge {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--bg);
+  background: var(--text-dim);
+}
+
+.coupling-panel__item--code .coupling-panel__badge {
+  background: var(--module-color);
+  color: #071224;
+}
+
+.coupling-panel__item--db .coupling-panel__badge {
+  background: var(--table-color);
+  color: #1a1400;
+}
+
+.coupling-panel__title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.coupling-panel__detail {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 2px;
+  line-height: 1.4;
+}
