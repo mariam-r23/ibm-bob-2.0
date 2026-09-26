@@ -1,0 +1,14 @@
+{
+  "name": "monolith",
+  "version": "1.0.0",
+  "description": "MonoSplitter AI demo monolith - deliberately coupled users + payments modules",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5"
+  }
+}
