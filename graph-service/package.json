@@ -1,0 +1,15 @@
+{
+  "name": "graph-service",
+  "version": "1.0.0",
+  "description": "Runs madge against monolith/, serves the code dependency graph + DB schema graph as JSON",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "madge": "^8.0.0"
+  }
+}
