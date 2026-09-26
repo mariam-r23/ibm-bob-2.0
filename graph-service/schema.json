@@ -1,0 +1,9 @@
+{
+  "tables": [
+    { "id": "Users", "fields": ["id", "name", "email"] },
+    { "id": "Payments", "fields": ["id", "userId", "amount"] }
+  ],
+  "relations": [
+    { "from": "Payments", "to": "Users", "type": "foreign_key", "field": "userId" }
+  ]
+}
