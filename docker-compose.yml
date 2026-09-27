@@ -1,9 +1,17 @@
 version: '3.8'
 
-# Phase 1: monolith + graph-service running side by side so the dashboard
-# can hit a real backend. extracted-services/payments is added here in
-# Phase 2 once the carve-out engine has written it.
+# Phase 2: monolith + graph-service + extracted payments microservice.
+# The monolith's /users/:id/charge route now delegates to payments-service
+# over HTTP (rewritten by MonoSplitter AI carve-out engine).
 services:
+  payments-service:
+    build:
+      context: ./extracted-services/payments
+    ports:
+      - '4200:4200'
+    environment:
+      - PORT=4200
+
   monolith:
     build:
       context: ./monolith
@@ -11,6 +19,9 @@ services:
       - '4000:4000'
     environment:
       - PORT=4000
+      - PAYMENTS_SERVICE_URL=http://payments-service:4200
+    depends_on:
+      - payments-service
 
   graph-service:
     build:
