@@ -1,21 +1,21 @@
 /**
  * users/index.js
  * --------------
- * DELIBERATE COUPLING POINT #1 (code-level).
+ * DELIBERATE COUPLING POINT #1 — REWRITTEN by MonoSplitter AI carve-out.
  *
- * This module directly `require()`s payments/ and calls its exported
- * processPayment() function as a normal in-process JS call. This is exactly
- * the kind of "spaghetti link" that makes monoliths hard to split by hand —
- * madge surfaces it as a users -> payments import edge, and Bob's carve-out
- * task (Phase 2) rewrites the call below into an HTTP client call against
- * the new extracted-services/payments service.
+ * The direct in-process `require('../payments')` / `processPayment()` call
+ * has been replaced with an HTTP client call to the extracted
+ * payments-service at http://payments-service:4200 (docker-compose hostname).
+ * External behavior (request/response shapes, status codes) is unchanged —
+ * verified by tests/payments-contract.test.js.
  */
 
 const express = require('express');
 const db = require('../db');
-const { processPayment } = require('../payments'); // <-- direct in-process import
 
 const router = express.Router();
+
+const PAYMENTS_SERVICE_URL = process.env.PAYMENTS_SERVICE_URL || 'http://payments-service:4200';
 
 // --- HTTP routes (mounted at /users in monolith/server.js) -----------------
 
@@ -36,18 +36,25 @@ router.post('/', (req, res) => {
 });
 
 /**
- * Sign-up flow that also charges an initial fee — this is the realistic
- * "business reason" the two modules ended up coupled: a user action needs to
- * trigger a payment, and the shortest path was a direct function call.
+ * Sign-up flow that also charges an initial fee.
+ * Previously called processPayment() in-process (coupling #1).
+ * Now delegates to the extracted payments-service over HTTP.
  */
-router.post('/:id/charge', (req, res) => {
+router.post('/:id/charge', async (req, res) => {
   const { amount } = req.body;
   try {
-    // >>> COUPLING POINT #1: direct in-process call into payments/ <<<
-    const payment = processPayment(req.params.id, amount);
-    res.status(201).json(payment);
+    const response = await fetch(`${PAYMENTS_SERVICE_URL}/payments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: req.params.id, amount }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      return res.status(response.status).json(data);
+    }
+    res.status(201).json(data);
   } catch (err) {
-    res.status(err.status || 500).json({ error: err.message });
+    res.status(502).json({ error: 'payments-service unreachable', detail: err.message });
   }
 });
 

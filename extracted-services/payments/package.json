@@ -1,0 +1,14 @@
+{
+  "name": "payments-service",
+  "version": "1.0.0",
+  "description": "Extracted payments microservice — carved out of monolith/ by MonoSplitter AI",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js",
+    "dev": "node main.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5"
+  }
+}
