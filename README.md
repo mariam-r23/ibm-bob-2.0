@@ -4,97 +4,116 @@ Visualizes a monolith's module + database coupling as an interactive graph,
 then uses Bob to agentically carve a selected module out into a standalone
 microservice. Built for the IBM Bob 2.0 hackathon.
 
-> **Status:** Phase 1 complete (code-coupling graph). Phase 2 (Bob carve-out
-> engine) and Phase 3 (DB Tier 2 generation + demo polish) are next — see
-> `docs/requirements.md` for the full phase breakdown.
+**Status: all 3 phases complete.** A real dependency graph, a real Bob-run
+carve-out (4-step agentic workflow with a subagent doing parallel work),
+and a real before/after DB schema comparison — nothing in the demo path is
+mocked or invented.
 
-## What's here (Phase 1)
+## What's here
 
-- `monolith/` — the demo target app (Node/Express), with two deliberate
-  coupling points:
-  1. `users/index.js` directly calls `processPayment()` from `payments/`.
-  2. `users/` and `payments/` both read/write the shared `db.js` data layer.
+- `monolith/` — the demo target app (Node/Express) with two deliberate
+  coupling points: `users/index.js` directly calling `processPayment()`
+  from `payments/`, and both modules sharing `monolith/db.js`.
 - `graph-service/` — runs `madge` against `monolith/`, serves the code
-  dependency graph (`GET /api/graph`) and the Tier 1 DB schema graph
-  (`GET /api/schema`) per `docs/contracts.md`.
-- `frontend/` — React + reactflow dashboard. Fetches both endpoints, merges
-  them client-side, renders module nodes + table nodes with pan/zoom, and
-  lets you click a module node to select/highlight it.
-- `extracted-services/`, `bob-tasks/` — scaffolded, populated in Phase 2.
-- `docs/` — the planning docs this build follows (`contracts.md` is the
-  source of truth for every shared JSON shape).
+  dependency graph (`GET /api/graph`), the original Tier 1 DB schema
+  (`GET /api/schema`), and the Tier 2 split-out schema once Bob has
+  generated it (`GET /api/schema/split`) — see `docs/contracts.md`.
+- `frontend/` — React + reactflow dashboard. Renders the merged code +
+  DB coupling graph, the "Coupling points detected" panel, and — after
+  running the carve-out — a live task log, a generated-files manifest, the
+  real import diff, and the before/after DB schema comparison.
+- `extracted-services/payments/` — what Bob actually built: a standalone
+  Express service, its own isolated data store, a split schema, and a
+  migration plan (documentation only — nothing here connects to or
+  executes against a real database).
+- `.bob/skills/carve-out-microservice/` — the repeatable Bob Skill that
+  drives the carve-out (see `bob-tasks/README.md` for how to run it).
+- `tests/payments-contract.test.js` — the auto-generated contract test
+  proving the rewritten HTTP path behaves identically to the old
+  in-process call, for both happy-path and error cases.
+- `docs/` — the planning docs this build follows; `contracts.md` is the
+  source of truth for every shared JSON shape.
 
-## Setup
+## Running the demo
 
-Requires Node.js 20+.
+Requires Node.js 20+ (Docker optional — see below).
 
 ```bash
-# monolith
+# install each project's deps
 cd monolith && npm install && cd ..
-
-# graph-service
 cd graph-service && npm install && cd ..
-
-# frontend
 cd frontend && npm install && cd ..
-
-# global tool (used by graph-service, and handy for manual checks)
-npm install -g madge
 ```
 
-## Running it locally (no Docker needed for Phase 1 dev)
-
-Open three terminals from the workspace root:
+Open four terminals from the workspace root:
 
 ```bash
 # 1. monolith (port 4000)
 cd monolith && npm start
 
-# 2. graph-service (port 4100)
+# 2. payments-service — only needed if you want the LIVE service running
+#    behind the already-rewritten monolith (the dashboard's carve-out replay
+#    itself doesn't need this — see "How the demo replay works" below)
+cd extracted-services/payments && npm install && npm start
+
+# 3. graph-service (port 4100)
 cd graph-service && npm start
 
-# 3. frontend (port 5173, proxies /api/* to graph-service on :4100)
+# 4. frontend (port 5173, proxies /api/* to graph-service on :4100)
 cd frontend && npm run dev
 ```
 
-Then open **http://localhost:5173**. You should see:
+Open **http://localhost:5173**:
 
-- Two blue module nodes (`users`, `payments`) with a solid animated edge
-  `users → payments` (the direct `processPayment()` import madge found).
-- Two amber table nodes (`Users`, `Payments`) below them with a dashed
-  foreign-key edge `Payments → Users` (the `db.js` coupling, Tier 1).
-- Clicking the `payments` module node highlights it and shows a
-  "carve-out target (Phase 2)" hint in the header.
+1. You'll see the real code + DB coupling graph — `users → payments`
+   (import) and `Payments → Users` (foreign key), both pulsing, plus the
+   coupling points panel and live stats (files scanned, coupling points
+   found) — all real numbers from `madge`'s actual scan.
+2. Click the `payments` module node, then **"✦ Carve Out with Bob."**
+3. Watch the live task log step through all 7 steps (the 4 carve-out steps
+   Mariam ran, then the 3 Tier 2 steps Anosha ran).
+4. Once complete, the Results panel opens — **Generated files** (the real
+   manifest), **Import diff** (the actual before/after of
+   `monolith/users/index.js`), and **DB schema** (the actual before/after
+   of the Payments table — coupled via FK vs. isolated post-carve-out).
 
-### Sanity-checking the pieces individually
+### How the demo replay works
 
-```bash
-curl http://localhost:4000/health        # monolith is up
-curl http://localhost:4000/users         # seeded users
-curl -X POST http://localhost:4000/users/1/charge \
-  -H "Content-Type: application/json" -d '{"amount": 12.5}'   # coupling point #1 in action
-curl http://localhost:4100/api/graph     # real madge-derived module graph
-curl http://localhost:4100/api/schema    # Tier 1 DB schema
-```
+The "Carve Out with Bob" button replays the *real* result of the Bob task
+that was already run once (`bob-tasks/carve-out-status.json`, copied to
+`frontend/public/`) — see `frontend/src/carveOutApi.js`. It's not a live
+re-run of Bob during the demo; the agentic work already happened and is
+being faithfully replayed. This matches `docs/requirements.md` §4, which
+allows either a live stream or "shown directly in Bob IDE during the
+demo" — we chose the pre-recorded-real-result path for demo reliability.
 
-## Docker (base services)
+### Docker (optional)
 
 ```bash
 docker-compose up --build
 ```
 
-Brings up `monolith` (`:4000`) and `graph-service` (`:4100`). The frontend
-currently runs via `npm run dev` outside Docker; `extracted-services/payments`
-joins `docker-compose.yml` in Phase 2 once the carve-out engine writes it.
+Brings up `monolith`, `payments-service`, and `graph-service` together —
+the "does this actually run as separate services" proof. The frontend
+still runs via `npm run dev` outside Docker.
+
+## Bob usage evidence
+
+- `AGENTS.md` + `.bob/rules-*/AGENTS.md` — generated by `/init`, reading
+  the real codebase.
+- `.bob/skills/carve-out-microservice/SKILL.md` — the reusable Skill
+  driving the carve-out (subagent used for the parallel scaffold +
+  import-rewrite step — see `bob-tasks/README.md`).
+- `bob_sessions/` — task session summaries for every Bob run this project
+  used.
+- `bob-tasks/carve-out-status.json` — the real §4 result, not mocked.
 
 ## Project docs
 
-- `docs/project-context.md` — the problem, the concept, locked-in demo
+- `docs/project-context.md` — the problem, the concept, locked demo
   decisions.
-- `docs/requirements.md` — phase-by-phase functional requirements and exit
-  criteria.
-- `docs/contracts.md` — every shared JSON shape (code graph, DB schema graph,
-  carve-out request/result). Watch this file — it's the single source of
-  truth between backend and frontend.
+- `docs/requirements.md` — phase-by-phase requirements and exit criteria.
+- `docs/contracts.md` — every shared JSON shape. Source of truth between
+  backend and frontend.
 - `docs/developmentflow.md` — branching strategy, session checklists.
 - `docs/workplans/` — per-teammate phase breakdowns.

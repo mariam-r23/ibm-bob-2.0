@@ -26,6 +26,10 @@ app.use(cors());
 
 const MONOLITH_PATH = path.join(__dirname, '..', 'monolith');
 const SCHEMA_PATH = path.join(__dirname, 'schema.json');
+// Tier 2: the split-out schema Bob generated during the carve-out
+// (extracted-services/payments/schema.json) — sibling directory to
+// monolith/, same as MONOLITH_PATH above.
+const SPLIT_SCHEMA_PATH = path.join(__dirname, '..', 'extracted-services', 'payments', 'schema.json');
 
 /**
  * Given a file path relative to monolith/ (e.g. "users/index.js" or
@@ -125,6 +129,24 @@ app.get('/api/schema', (req, res) => {
   } catch (err) {
     console.error('[graph-service] failed to read schema.json:', err);
     res.status(500).json({ error: 'failed to read schema', detail: err.message });
+  }
+});
+
+// GET /api/schema/split — Tier 2 split-out schema (post carve-out), if it
+// exists yet. Same shape as /api/schema (contracts.md §2), scoped to just
+// the extracted service's tables. Returns 404 (not 500) when the carve-out
+// hasn't produced this file yet — that's an expected, not an error, state
+// before Phase 2 has run.
+app.get('/api/schema/split', (req, res) => {
+  try {
+    const raw = fs.readFileSync(SPLIT_SCHEMA_PATH, 'utf-8');
+    res.json(JSON.parse(raw));
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      return res.status(404).json({ error: 'split schema not generated yet' });
+    }
+    console.error('[graph-service] failed to read split schema.json:', err);
+    res.status(500).json({ error: 'failed to read split schema', detail: err.message });
   }
 });
 
