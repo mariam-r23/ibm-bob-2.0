@@ -1,0 +1,20 @@
+{
+  "status": "success",
+  "steps": [
+    { "step": "copy_module", "status": "done" },
+    { "step": "scaffold_service", "status": "done" },
+    { "step": "rewrite_imports_to_http", "status": "done" },
+    { "step": "generate_contract_tests", "status": "done" },
+    { "step": "generate_split_schema", "status": "pending" },
+    { "step": "generate_data_access_layer", "status": "pending" },
+    { "step": "generate_migration_plan", "status": "pending" }
+  ],
+  "generatedFiles": [
+    "extracted-services/payments/main.js",
+    "extracted-services/payments/Dockerfile",
+    "extracted-services/payments/index.js",
+    "extracted-services/payments/package.json",
+    "monolith/users/index.js",
+    "tests/payments-contract.test.js"
+  ]
+}

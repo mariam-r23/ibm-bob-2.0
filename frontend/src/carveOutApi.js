@@ -1,39 +1,75 @@
 /**
  * carveOutApi.js
  * --------------
- * Sends the §3 Carve-Out Request shape to the Bob trigger endpoint.
+ * Reads the real Carve-Out result (contracts.md §4 shape) that Mariam's
+ * carve-out engine already produced by actually running the Bob task once.
  *
- * POST /api/carve-out
- * Body: { action, targetModule, timestamp }  (contracts.md §3)
+ * This is a one-time, pre-recorded result, not a live re-run — see
+ * bob-tasks/carve-out-status.json (copied to frontend/public/ so Vite
+ * can serve it as a static file).
  *
- * Returns the parsed JSON response (or throws on network/HTTP error).
- * When mariam/carve-out-engine is merged, nothing in this file needs to
- * change — just make sure the endpoint is reachable via the Vite proxy.
+ * Same function signature as before, so App.jsx doesn't need to change.
  */
 
-const CARVE_OUT_URL = '/api/carve-out';
+const CARVE_OUT_STATUS_URL = '/carve-out-status.json';
 
 /**
  * @param {string} targetModule  The module id to carve out (e.g. "payments").
- * @returns {Promise<object>}    Parsed response body.
+ * @returns {Promise<object>}    Parsed response body, matching contracts.md §4.
  */
 export async function sendCarveOutRequest(targetModule) {
-  const body = {
-    action: 'carve_out',
-    targetModule,
-    timestamp: new Date().toISOString(),
-  };
-
-  const res = await fetch(CARVE_OUT_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+  const res = await fetch(CARVE_OUT_STATUS_URL);
 
   if (!res.ok) {
     const text = await res.text().catch(() => '');
-    throw new Error(`Carve-out request failed (${res.status}): ${text}`);
+    throw new Error(`Failed to load carve-out result (${res.status}): ${text}`);
   }
 
   return res.json();
+}
+
+/**
+ * playCarveOutResult(onUpdate)
+ * -----------------------------
+ * Fetches the real §4 result (from Mariam's actual carve-out run) and
+ * replays it step-by-step, same interface as startMockCarveOut, so
+ * App.jsx doesn't need structural changes — just swap which function
+ * it calls.
+ *
+ * Returns a cancel() function, same as the mock did.
+ */
+export function playCarveOutResult(onUpdate) {
+  let cancelled = false;
+
+  async function run() {
+    let result;
+    try {
+      result = await sendCarveOutRequest();
+    } catch (err) {
+      if (!cancelled) {
+        onUpdate({ status: 'error', steps: [], generatedFiles: [], error: err.message });
+      }
+      return;
+    }
+
+    const steps = result.steps || [];
+    for (let i = 0; i < steps.length; i++) {
+      if (cancelled) return;
+      const partialSteps = steps.map((s, idx) => ({
+        ...s,
+        status: idx < i ? s.status : idx === i ? 'in_progress' : 'pending',
+      }));
+      onUpdate({ status: 'in_progress', steps: partialSteps, generatedFiles: [] });
+      await new Promise((r) => setTimeout(r, 500));
+    }
+
+    if (cancelled) return;
+    onUpdate(result); // final real snapshot — status: "success", full steps + generatedFiles
+  }
+
+  run();
+
+  return () => {
+    cancelled = true;
+  };
 }
