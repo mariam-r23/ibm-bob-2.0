@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -9,6 +9,11 @@ import ReactFlow, {
 import { nodeTypes } from './nodes.jsx';
 import { buildFlowGraph, computeStats, getCouplingSummary } from './graphTransform.js';
 import CouplingPanel from './CouplingPanel.jsx';
+import TaskLogPanel from './TaskLogPanel.jsx';
+import DiffViewer from './DiffViewer.jsx';
+import { startMockCarveOut } from './carveOutMock.js';
+// When mariam/carve-out-engine lands, also import sendCarveOutRequest from
+// './carveOutApi.js' and call it before starting the log poll/stream.
 
 const GRAPH_URL = '/api/graph';
 const SCHEMA_URL = '/api/schema';
@@ -22,6 +27,15 @@ export default function App() {
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
   const [selectedModule, setSelectedModule] = useState(null);
+
+  // --- Carve-out state ---
+  // taskLog: null = idle; object = active/complete §4 snapshot
+  const [taskLog, setTaskLog] = useState(null);
+  // showDiff: only true after a successful run
+  const [showDiff, setShowDiff] = useState(false);
+  // carving: prevents double-clicks while a run is active
+  const [carving, setCarving] = useState(false);
+  const cancelMockRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -78,7 +92,7 @@ export default function App() {
   );
 
   const onNodeClick = useCallback((_event, node) => {
-    if (node.data?.kind !== 'module') return; // only module nodes are selectable (carve-out targets)
+    if (node.data?.kind !== 'module') return;
     setSelectedModule((prev) => (prev === node.id ? null : node.id));
   }, []);
 
@@ -91,6 +105,63 @@ export default function App() {
       }))
     );
   }, [selectedModule]);
+
+  // Cancel any running mock when the component unmounts.
+  useEffect(() => {
+    return () => {
+      if (cancelMockRef.current) cancelMockRef.current();
+    };
+  }, []);
+
+  /**
+   * Handle "Carve Out with Bob" button click.
+   *
+   * Flow:
+   *   1. (When real engine is available) POST §3 request via sendCarveOutRequest().
+   *   2. Start mock (or real) §4 stream, pushing snapshots into taskLog state.
+   *   3. On success → show DiffViewer.
+   *   4. Error state is reflected in the §4 snapshot; UI stays responsive.
+   */
+  const handleCarveOut = useCallback(() => {
+    if (carving || !selectedModule) return;
+
+    // Reset previous run.
+    if (cancelMockRef.current) cancelMockRef.current();
+    setShowDiff(false);
+    setCarving(true);
+    setTaskLog(null);
+
+    // --- Swap this block for sendCarveOutRequest(selectedModule) when engine lands ---
+    // sendCarveOutRequest(selectedModule).catch(console.error);
+    // ---------------------------------------------------------------------------------
+
+    const cancel = startMockCarveOut((snapshot) => {
+      setTaskLog(snapshot);
+      if (snapshot.status === 'success') {
+        setCarving(false);
+        setShowDiff(true);
+      }
+      if (snapshot.status === 'error') {
+        setCarving(false);
+        // taskLog stays visible so the user can see which step failed.
+      }
+    });
+
+    cancelMockRef.current = cancel;
+  }, [carving, selectedModule]);
+
+  const handleCloseLog = useCallback(() => {
+    if (cancelMockRef.current) {
+      cancelMockRef.current();
+      cancelMockRef.current = null;
+    }
+    setTaskLog(null);
+    setCarving(false);
+  }, []);
+
+  const handleCloseDiff = useCallback(() => {
+    setShowDiff(false);
+  }, []);
 
   return (
     <div className="app">
@@ -125,7 +196,17 @@ export default function App() {
           <div className="app__selection">
             Selected module: <strong>{selectedModule}</strong>
             {selectedModule === 'payments' && (
-              <span className="app__selection-hint"> — carve-out target (Phase 2)</span>
+              <>
+                <span className="app__selection-hint"> — carve-out target (Phase 2)</span>
+                <button
+                  className={`carve-btn${carving ? ' carve-btn--busy' : ''}`}
+                  onClick={handleCarveOut}
+                  disabled={carving}
+                  aria-busy={carving}
+                >
+                  {carving ? 'Running…' : '✦ Carve Out with Bob'}
+                </button>
+              </>
             )}
           </div>
         )}
@@ -159,6 +240,22 @@ export default function App() {
               zoomable
             />
             <CouplingPanel items={couplingItems} />
+
+            {/* Live task log panel — positioned bottom-left inside the canvas */}
+            {taskLog && (
+              <TaskLogPanel
+                taskLog={taskLog}
+                onClose={handleCloseLog}
+              />
+            )}
+
+            {/* Results / diff viewer — appears after a successful run */}
+            {showDiff && taskLog && (
+              <DiffViewer
+                generatedFiles={taskLog.generatedFiles}
+                onClose={handleCloseDiff}
+              />
+            )}
           </ReactFlow>
         )}
       </main>
