@@ -9,14 +9,14 @@ Your work alternates backend and frontend every phase — you're not "the backen
 
 **Branch:** `anosha/monolith-backend`
 
-- [ ] Build the demo monolith in `monolith/` (Node/Express): `/users` and `/payments` folders, minimal realistic routes.
-- [ ] Seed the two deliberate coupling points:
-  - [ ] `users/index.js` directly imports and calls `processPayment()` from `payments/`.
-  - [ ] `users/` and `payments/` both read/write a shared `db.js` (in-memory or simple JSON/SQLite file).
-- [ ] Keep the code intentionally simple — this is Bob's target, not a real product; don't over-engineer it.
-- [ ] Scaffold the monorepo workspace root: `MicroSplit-Workspace/` containing `monolith/` and an empty `extracted-services/`.
-- [ ] Add `.bobignore` at the workspace root: `node_modules/`, `.git/`, `dist/`.
-- [ ] Confirm `madge` (Mariam's side) can actually parse your monolith cleanly — run it yourself once as a sanity check before merging.
+- [x] Build the demo monolith in `monolith/` (Node/Express): `/users` and `/payments` folders, minimal realistic routes.
+- [x] Seed the two deliberate coupling points:
+  - [x] `users/index.js` directly imports and calls `processPayment()` from `payments/`.
+  - [x] `users/` and `payments/` both read/write a shared `db.js` (in-memory or simple JSON/SQLite file).
+- [x] Keep the code intentionally simple — this is Bob's target, not a real product; don't over-engineer it.
+- [x] Scaffold the monorepo workspace root: `MicroSplit-Workspace/` containing `monolith/` and an empty `extracted-services/`.
+- [x] Add `.bobignore` at the workspace root: `node_modules/`, `.git/`, `dist/`.
+- [x] Confirm `madge` (Mariam's side) can actually parse your monolith cleanly — run it yourself once as a sanity check before merging.
 
 **Waiting on:** nothing — this is the starting point for everything else.
 
