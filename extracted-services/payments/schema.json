@@ -1,0 +1,9 @@
+{
+  "tables": [
+    {
+      "id": "Payments",
+      "fields": ["id", "userId", "amount"]
+    }
+  ],
+  "relations": []
+}

@@ -5,9 +5,9 @@
     { "step": "scaffold_service", "status": "done" },
     { "step": "rewrite_imports_to_http", "status": "done" },
     { "step": "generate_contract_tests", "status": "done" },
-    { "step": "generate_split_schema", "status": "pending" },
-    { "step": "generate_data_access_layer", "status": "pending" },
-    { "step": "generate_migration_plan", "status": "pending" }
+    { "step": "generate_split_schema", "status": "done" },
+    { "step": "generate_data_access_layer", "status": "done" },
+    { "step": "generate_migration_plan", "status": "done" }
   ],
   "generatedFiles": [
     "extracted-services/payments/main.js",
@@ -15,6 +15,9 @@
     "extracted-services/payments/index.js",
     "extracted-services/payments/package.json",
     "monolith/users/index.js",
-    "tests/payments-contract.test.js"
+    "tests/payments-contract.test.js",
+    "extracted-services/payments/schema.json",
+    "extracted-services/payments/data-access.js",
+    "extracted-services/payments/MIGRATION.md"
   ]
 }
