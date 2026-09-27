@@ -852,3 +852,58 @@ body {
   background: rgba(52, 199, 89, 0.06);
   color: #a8f0bf;
 }
+
+/* --- schema comparison tab (Phase 3) --- */
+
+.dv-schema-card {
+  padding: 12px;
+  font-size: 12px;
+}
+
+.dv-schema-card--loading,
+.dv-schema-card--error {
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+.dv-schema-card__title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--table-color);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+}
+
+.dv-schema-card__title:not(:first-child) {
+  margin-top: 12px;
+}
+
+.dv-schema-card__fields {
+  margin: 0 0 8px 0;
+  padding-left: 16px;
+  color: var(--text-dim);
+  font-family: 'Consolas', 'Menlo', monospace;
+}
+
+.dv-schema-card__fields li {
+  line-height: 1.6;
+}
+
+.dv-schema-card__relation {
+  margin-top: 10px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.dv-schema-card__relation--coupled {
+  background: rgba(224, 90, 90, 0.1);
+  color: #ff9d9d;
+}
+
+.dv-schema-card__relation--isolated {
+  background: rgba(52, 199, 89, 0.1);
+  color: #34c759;
+}

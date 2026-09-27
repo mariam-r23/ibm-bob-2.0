@@ -12,8 +12,6 @@ import CouplingPanel from './CouplingPanel.jsx';
 import TaskLogPanel from './TaskLogPanel.jsx';
 import DiffViewer from './DiffViewer.jsx';
 import { playCarveOutResult } from './carveOutApi.js';
-// When mariam/carve-out-engine lands, also import sendCarveOutRequest from
-// './carveOutApi.js' and call it before starting the log poll/stream.
 
 const GRAPH_URL = '/api/graph';
 const SCHEMA_URL = '/api/schema';
@@ -130,10 +128,6 @@ export default function App() {
     setShowDiff(false);
     setCarving(true);
     setTaskLog(null);
-
-    // --- Swap this block for sendCarveOutRequest(selectedModule) when engine lands ---
-    // sendCarveOutRequest(selectedModule).catch(console.error);
-    // ---------------------------------------------------------------------------------
 
     const cancel = playCarveOutResult((snapshot) => {
       setTaskLog(snapshot);
